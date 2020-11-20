@@ -21,29 +21,34 @@ apt-get install -y git wget jq vim unzip ca-certificates
 echo "Installing Docker"
 groupadd docker
 apt-get install -y apt-transport-https curl gnupg2 software-properties-common
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 apt-key fingerprint 0EBFCD88
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 apt-get update
+#Make sure you are about to install from the Docker repo instead of the default Ubuntu 16.04 repo
+apt-cache policy docker-ce
 apt-get install -y docker-ce
 
-# Install PHP 7.1 via sury mirror - https://twitter.com/debsuryorg
-echo "Installing PHP 7.1"
+## Install PHP 7.3
+echo "Installing PHP 7.3"
 apt-get install -y apt-transport-https lsb-release
-wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
-apt-get update
-apt-get install -y php7.1 php7.1-xml php7.1-mbstring php7.1-curl
+apt-get install -y software-properties-common
+add-apt-repository ppa:ondrej/php -y
+apt-get update -y
+echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu xenial main" > /etc/apt/sources.list.d/php.list
+echo "deb-src http://ppa.launchpad.net/ondrej/php/ubuntu xenial main"
+
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AA8E81B4331F7F50
+apt-get install -y php7.3 php7.3-xml php7.3-mbstring php7.3-curl php7.3-cli php7.3-common
 
 ## GetComposer.org
 echo "Installing Composer"
-/usr/bin/php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-# When an update to composer happens, you need to update this hash. https://getcomposer.org/download/
-/usr/bin/php -r "if (hash_file('SHA384', 'composer-setup.php') === '93b54496392c062774670ac18b134c3b3a95e5a5e5c8f1a9f115f203b75bf9a129d5daa8ba6a13e2cc8a1da0806388a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-/usr/bin/php composer-setup.php
-/usr/bin/php -r "unlink('composer-setup.php');"
-chmod +x composer.phar
+apt-get install -y curl php-cli php-mbstring git unzip
+echo "Loading composer"
+curl -s https://getcomposer.org/installer | php
+echo "Moving composer"
 mv composer.phar /usr/local/bin/composer
+echo "composer installed"
 
 #####
 ## Install Java + Jenkins + Plugins
@@ -51,24 +56,19 @@ mv composer.phar /usr/local/bin/composer
 
 ## Install Oracle Java 8
 echo "Installing Oracle Java 8"
-echo /usr/bin/debconf shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
-echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" | sudo tee /etc/apt/sources.list.d/oraclejava8.list
-echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" | sudo tee -a /etc/apt/sources.list.d/oraclejava8.list
+apt-get install -y default-jre
+apt-get install -y default-jdk
+add-apt-repository ppa:webupd8team/java -y
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EEA14886
 apt-get update
-apt-get install -y oracle-java8-installer
-# Make sure Java 8 becomes default java
-apt-get install -y oracle-java8-set-default
 
 ## Install Jenkins
 echo "Installing Jenkins"
-wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
-# Add jenkins debian repo to sources file if it doesn't exist
-if ! grep -q "deb https://pkg.jenkins.io/debian binary/" /etc/apt/sources.list; then
-    echo "deb https://pkg.jenkins.io/debian binary/" | sudo tee -a /etc/apt/sources.list
-fi
+wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add - OK
+echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list
 apt-get update
-apt-get install -y jenkins
+add-apt-repository universe -y
+apt-get install -y jenkins --allow-unauthenticated
 
 # Replace Config to skip Jenkins Setup
 echo "Removing Jenkins Security"

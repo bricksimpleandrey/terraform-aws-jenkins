@@ -27,6 +27,23 @@ fi
 echo '/dev/xvdf /data ext4 defaults 0 0' | tee -a /etc/fstab
 mount /data > /tmp/mount.log
 
+# Install aws cli
+apt-get update
+apt-get install  -y awscli
+
+## INSTALL DEPS
+
+## Set Timezone to UTC
+timedatectl set-timezone UTC
+
+## Install Misc Deps
+echo "Installing misc binaries"
+apt-get update
+# Server Packages
+apt-get install -y wget jq unzip ca-certificates curl gnupg2 lsb-release
+# Dev stuff
+apt-get install -y vim git
+
 # Goto where jenkins data is stored
 cd /var/lib
 
@@ -37,6 +54,7 @@ mkdir -p /data/docker
 # After all that, symlink jenkins directory to /data
 ln -s /data/jenkins jenkins
 ln -s /data/docker docker
+ln -s /data/docker /var/lib/docker # mount point symlink
 
 ### INSTALL JENKINS & DEPS
 

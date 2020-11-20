@@ -13,18 +13,18 @@ terraform {
 provider "aws" {
   # If you have other AWS accounts, use this profile marker to point to specific credentials.
 #  profile = "your-profile-name"
-  version = "~> 0.1"
+  version = "~> 2.7"
   region = "${var.region}"
 }
 
 provider "template" {
-  version = "~> 0.1"
+  version = "~> 2.1"
 }
 
 # Where to store the terraform state file. Note that you won't have a local tfstate file, because its stored remotly.
 data "terraform_remote_state" "jenkins_state" {
   backend = "s3"
-  config {
+  config = {
     bucket = "${var.s3prefix}-terraform-states-${var.region}"
     key = "${var.env_name}/jenkins.tfstate"
     region = "${var.region}"
@@ -35,7 +35,7 @@ data "terraform_remote_state" "jenkins_state" {
 data "template_file" "jenkins_userdata" {
   template = "${file("userdata.tpl")}"
 
-  vars {
+  vars = {
     EnvName = "${var.env_name}"
     # The name of the bucket that will store our Jenkins resources. This was created in terraform-aws-init
     JenkinsBucket = "${var.s3prefix}-jenkins-files-${var.region}"
@@ -56,7 +56,7 @@ resource "aws_instance" "jenkins_ec2" {
   iam_instance_profile        = "${aws_iam_instance_profile.jenkins_profile.name}"
   user_data                   = "${data.template_file.jenkins_userdata.rendered}"
 
-  tags {
+  tags = {
     Name = "${var.env_name}-${var.region}"
     ManagedBy = "Terraform"
     IamInstanceRole = "${aws_iam_role.jenkins_iam_role.name}"
@@ -65,7 +65,8 @@ resource "aws_instance" "jenkins_ec2" {
   ebs_block_device {
     device_name = "/dev/xvdf"
     volume_type = "standard"
-    volume_size = "250"
+    # Original size was 250. I made it 20 for testing.
+    volume_size = "20"
     # Safe guard for your jenkins and docker data
     delete_on_termination = "false"
   }
@@ -75,7 +76,7 @@ resource "aws_instance" "jenkins_ec2" {
 resource "aws_vpc" "main" {
   cidr_block = "10.10.0.0/16"
 
-  tags {
+  tags = {
     Name = "tf-${var.env_name}-vpc"
     ManagedBy = "Terraform"
   }
@@ -85,7 +86,7 @@ resource "aws_vpc" "main" {
 resource "aws_internet_gateway" "main" {
   vpc_id = "${aws_vpc.main.id}"
 
-  tags {
+  tags = {
     ManagedBy = "Terraform"
   }
 }
@@ -105,7 +106,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
   availability_zone = "${element(split(",",var.availability_zones), count.index)}"
 
-  tags {
+  tags = {
     Name = "${format("tf-aws-${var.env_name}-public-%03d", count.index+1)}"
     ManagedBy = "Terraform"
   }
@@ -119,7 +120,7 @@ resource "aws_security_group" "public" {
   description = "Managed By Terraform"
   vpc_id = "${aws_vpc.main.id}"
 
-  tags {
+  tags = {
     Name = "tf-${var.env_name}-public-sg"
     ManagedBy = "Terraform"
   }

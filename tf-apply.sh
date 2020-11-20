@@ -11,8 +11,8 @@ fi
 
 s3_prefix=$1
 if [ -z "$s3_prefix" ]; then
-    echo "An s3prefix must be provided! Failing out."
-    exit 1
+    s3_prefix="brick-new"
+    echo "No s3 prefix was passed in, using \"${s3_prefix}\" as the default"
 fi
 
 jenkins_env_name=$2
@@ -23,13 +23,13 @@ fi
 
 target_aws_region=$3
 if [ -z "$target_aws_region" ]; then
-    target_aws_region=us-west-2
+    target_aws_region=us-east-1
     echo "No region was passed in, using \"${target_aws_region}\" as the default"
 fi
 
 availability_zones=$4
 if [ -z "$availability_zones" ]; then
-    availability_zones=us-west-2a,us-west-2b,us-west-2c
+    availability_zones=us-east-1a,us-east-1b,us-east-1c
     echo "No availability zones were passed in, using \"${availability_zones}\" as the default"
 fi
 
