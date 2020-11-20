@@ -31,6 +31,7 @@ variable "availability_zones" {
 # The instance size we will use for Jenkins (I recommend large or higher for prod)
 variable "instance_type" {
   description = "AWS instance type for Jenkins"
+  # original instance type was t2.medium changed to cut cost
   default = "t2.micro"
 }
 
